@@ -6,23 +6,47 @@ import pandas as pd
 st.set_page_config(page_title="CT Sales AI", layout="wide")
 
 # =========================================================
-# Header
+# Visual theme only: all original search/data functions below are unchanged
 # =========================================================
+import base64
+from html import escape
 
-logo_path = Path("logo.png")
+hero_path = Path("ct_hero.png")
+hero_image = ""
+if hero_path.is_file():
+    hero_image = "data:image/png;base64," + base64.b64encode(hero_path.read_bytes()).decode("ascii")
 
-if logo_path.exists():
-    st.image(str(logo_path), width=900)
+st.markdown("""<style>
+.stApp {background:radial-gradient(ellipse at 83% 8%,#4b0b17 0%,#1a1116 28%,#0b0b0f 72%);color:#f8f6f6}
+.block-container {max-width:1320px;padding-top:2rem;padding-bottom:5rem}
+header[data-testid="stHeader"] {background:transparent}
+#MainMenu,footer {visibility:hidden}
+.ct-hero {position:relative;overflow:hidden;min-height:345px;border:1px solid #56323b;border-radius:24px;background:linear-gradient(105deg,#161115 0%,#241319 52%,#4b101b 100%);box-shadow:0 20px 70px #0009;margin-bottom:22px;padding:42px}
+.ct-hero:before {content:"";position:absolute;right:-120px;top:-150px;width:650px;height:650px;border:2px solid #e51b32;border-radius:50%;box-shadow:0 0 80px #d71c3e90;opacity:.45}
+.ct-hero img {position:absolute;right:0;top:0;height:100%;width:49%;object-fit:cover;object-position:center;mask-image:linear-gradient(to right,transparent,black 22%);-webkit-mask-image:linear-gradient(to right,transparent,black 22%)}
+.ct-hero .content {position:relative;z-index:2;max-width:62%}
+.ct-brand {font-weight:800;font-size:19px;letter-spacing:.2px}
+.ct-brand span {color:#f1293f}
+.ct-hero h1 {font-size:clamp(30px,4vw,52px);line-height:1.1;letter-spacing:-1.5px;margin:65px 0 13px}
+.ct-hero p {font-size:15px;color:#e4cfd4}
+.ct-heading {font-size:19px;font-weight:750;margin:23px 0 10px}
+div[data-testid="stTextInput"] input {background:#211b21;color:#fff;border:1px solid #67404a;border-radius:12px;min-height:54px}
+div[data-testid="stButton"] button {min-height:80px;background:linear-gradient(135deg,#34232a,#1d1b20);border:1px solid #63414a;border-radius:15px;color:#fff;font-size:16px;font-weight:650;white-space:normal}
+div[data-testid="stButton"] button:hover {background:#4b2732;border-color:#f13249;color:#fff}
+div[data-testid="stDataFrame"] {border-radius:12px;overflow:hidden}
+@media(max-width:700px){.ct-hero{padding:25px;min-height:285px}.ct-hero img{opacity:.35;width:85%}.ct-hero .content{max-width:100%}.ct-hero h1{margin-top:45px}}
+</style>""", unsafe_allow_html=True)
 
 st.markdown(
-    """
-    <h2 style='color:#cc0000;'>CT Sales AI Assistant</h2>
-    <p>Canon / GE / Siemens / Philips CT 사양, 비교표, 영업 포인트, 설치 현황 및 현장 피드백 검색</p>
-    <hr>
-    """,
-    unsafe_allow_html=True
+    '<div class="ct-hero">'
+    + (f'<img src="{hero_image}" alt="Canon CT hero">' if hero_image else '')
+    + '<div class="content"><div class="ct-brand"><span>Canon</span> &nbsp; CANON MEDICAL</div>'
+    + '<h1>Canon CT AI Assistant</h1>'
+    + '<p>CT Sales &amp; Clinical Knowledge Hub</p>'
+    + '<p>제품 사양, 경쟁사 비교, 설치 현황 및 현장 피드백 검색</p>'
+    + '</div></div>',
+    unsafe_allow_html=True,
 )
-
 
 # =========================================================
 # Data
@@ -906,11 +930,32 @@ def show_file_result(file):
 
 
 # =========================================================
-# Search UI
+# Search UI (original query/results retained; quick buttons are additive)
 # =========================================================
+
+if "search_question" not in st.session_state:
+    st.session_state.search_question = ""
+
+def set_quick_search(value):
+    st.session_state.search_question = value
+
+st.markdown('<div class="ct-heading">빠른 검색</div>', unsafe_allow_html=True)
+menu_columns = st.columns(4)
+menu_options = [
+    ("제품 정보", "PRISM 셀링 포인트 알려줘"),
+    ("경쟁사 비교", "미드하이 경쟁사 비교표"),
+    ("정비 및 운영", "Serve 사양 알려줘"),
+    ("현장 피드백", "GE VIBE CT 설치현황과 피드백 알려줘"),
+]
+for i, (label, query_text) in enumerate(menu_options):
+    with menu_columns[i]:
+        st.button(label, key=f"quick_menu_{i}", on_click=set_quick_search, args=(query_text,), use_container_width=True)
+
+st.markdown('<div class="ct-heading">통합 검색</div>', unsafe_allow_html=True)
 
 question = st.text_input(
     "질문을 입력하세요",
+    key="search_question",
     placeholder=(
         "예: GE VIBE CT 설치현황과 피드백 알려줘 / "
         "프로펄스 피드백 알려줘 / "
